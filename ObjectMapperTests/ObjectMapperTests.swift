@@ -12,7 +12,7 @@ import ObjectMapper
 
 class ObjectMapperTests: XCTestCase {
 
-    let userMapper = Mapper<User>()
+    let userMapper = Mapper()
     
     override func setUp() {
         super.setUp()
@@ -46,7 +46,7 @@ class ObjectMapperTests: XCTestCase {
         
         let userJSONString = "{\"username\":\"\(username)\",\"identifier\":\"\(identifier)\",\"photoCount\":\(photoCount),\"age\":\(age),\"drinker\":\(drinker),\"smoker\":\(smoker), \"arr\":[ \"bla\", true, 42 ], \"dict\":{ \"key1\" : \"value1\", \"key2\" : false, \"key3\" : 142 }, \"arrOpt\":[ \"bla\", true, 42 ], \"dictOpt\":{ \"key1\" : \"value1\", \"key2\" : false, \"key3\" : 142 }, \"birthday\": 1398956159, \"birthdayOpt\": 1398956159, \"y2k\" : \"2000-01-01T00:00:00Z\", \"y2kOpt\" : \"2000-01-01T00:00:00Z\", \"weight\": \(weight), \"float\": \(float), \"friend\": \(subUserJSON), \"friendDictionary\":{ \"bestFriend\": \(subUserJSON)}}"
 		
-		let user = userMapper.map(string: userJSONString)
+		let user = Mapper().map(string: userJSONString, toType: User.self)
 
         XCTAssertEqual(username, user.username, "Username should be the same")
         XCTAssertEqual(identifier, user.identifier!, "Identifier should be the same")
@@ -140,7 +140,7 @@ class ObjectMapperTests: XCTestCase {
 		
 		let userJSONString = "{\"username\":\"bob\", \"height\": {\"value\": \(heightInCM), \"text\": \"6 feet tall\"} }"
 		
-		let user = userMapper.map(string: userJSONString)
+		let user = Mapper().map(string: userJSONString, toType: User.self)
 
 		XCTAssertEqual(user.heightInCM!, heightInCM, "Username should be the same")
 	}
@@ -148,7 +148,7 @@ class ObjectMapperTests: XCTestCase {
 	func testNullObject() {
 		let userJSONString = "{\"username\":\"bob\"}"
 		
-		let user = userMapper.map(string: userJSONString)
+		let user = Mapper().map(string: userJSONString, toType: User.self)
 		
 		XCTAssert(user.heightInCM == nil, "Username should be the same")
 	}
@@ -170,8 +170,9 @@ class ObjectMapperTests: XCTestCase {
         
         let jsonString = Mapper().toJSONString(user, prettyPrint: true)
         println(jsonString)
-		var parsedUser = userMapper.map(string: jsonString)
-        
+		
+		
+		var parsedUser = Mapper().map(string: jsonString, toType: User.self)
 		
         XCTAssertEqual(user.identifier!, parsedUser.identifier!, "Identifier should be the same")
         XCTAssertEqual(user.photoCount, parsedUser.photoCount, "PhotoCount should be the same")
@@ -187,7 +188,7 @@ class ObjectMapperTests: XCTestCase {
 
     func testUnknownPropertiesIgnored() {
         let userJSONString = "{\"username\":\"bob\",\"identifier\":\"bob1987\", \"foo\" : \"bar\", \"fooArr\" : [ 1, 2, 3], \"fooObj\" : { \"baz\" : \"qux\" } }"
-        let user = userMapper.map(string: userJSONString)
+		let user = Mapper().map(string: userJSONString, toType: User.self)
         
         XCTAssert(user != nil, "User should not be nil")
     }
@@ -195,7 +196,7 @@ class ObjectMapperTests: XCTestCase {
     func testInvalidJsonResultsInNilObject() {
         let userJSONString = "{\"username\":\"bob\",\"identifier\":\"bob1987\"" // missing ending brace
 
-        let user = userMapper.map(string: userJSONString)
+		let user = Mapper().map(string: userJSONString, toType: User.self)
 		
         XCTAssert(user == nil, "User should be nil due to invalid JSON")
     }
@@ -206,7 +207,7 @@ class ObjectMapperTests: XCTestCase {
 		
 		let arrayJSONString = "[{\"name\": \"\(name1)\", \"UUID\": \"3C074D4B-FC8C-4CA2-82A9-6E9367BBC875\", \"major\": 541, \"minor\": 123},{ \"name\": \"\(name2)\", \"UUID\": \"3C074D4B-FC8C-4CA2-82A9-6E9367BBC876\", \"major\": 54321,\"minor\": 13 }]"
 	
-		let students = Mapper<Student>().mapArray(string: arrayJSONString)
+		let students: [Student] = Mapper().mapArray(string: arrayJSONString, toType: Student.self)
 
 		XCTAssert(!students.isEmpty, "Student Array should not be empty")
 		XCTAssert(students.count == 2, "There should be 2 students in array")
@@ -221,7 +222,7 @@ class ObjectMapperTests: XCTestCase {
 		
 		let arrayJSONString = "{\"name\": \"\(name1)\", \"UUID\": \"3C074D4B-FC8C-4CA2-82A9-6E9367BBC875\", \"major\": 541, \"minor\": 123}"
 		
-		let students = Mapper<Student>().mapArray(string: arrayJSONString)
+		let students = Mapper().mapArray(string: arrayJSONString, toType: Student.self)
 
 		XCTAssert(!students.isEmpty, "Student Array should not be empty")
 		XCTAssert(students.count == 1, "There should be 1 student in array")
@@ -235,7 +236,7 @@ class ObjectMapperTests: XCTestCase {
 		
 		let JSON = "{ \"tasks\": [{\"taskId\":103,\"percentage\":\(percentage1)},{\"taskId\":108,\"percentage\":\(percentage2)}] }"
 		
-		let plan = Mapper<Plan>().map(string: JSON)
+		let plan = Mapper().map(string: JSON, toType: Plan.self)
 		
 		if let tasks = plan.tasks {
 			let task1 = tasks[0]
@@ -252,7 +253,7 @@ class ObjectMapperTests: XCTestCase {
 		let code: Int = 22
 		let JSON = "{\"result\":{\"code\":\(code)}}"
 		
-		let response = Mapper<Response<Status>>().map(string: JSON)
+		let response = Mapper().map(string: JSON, toType: Response<Status>.self)
 		
 		if let status = response.result?.status {
 			XCTAssertEqual(status, code, "Code was not mapped correctly")
@@ -274,7 +275,7 @@ class ObjectMapperTests: XCTestCase {
 		
 		var taskArray = [task1, task2, task3]
 		
-		let JSONArray = Mapper().toJSONArray(taskArray)
+		let JSONArray = Mapper().toJSONArray(taskArray, toType: Task.self)
 		println(JSONArray)
 		
 		let taskId1 = JSONArray[0]["taskId"] as Int
@@ -298,13 +299,13 @@ class ObjectMapperTests: XCTestCase {
 
     func testISO8601DateTransformWithInvalidInput() {
         var JSON: [String: AnyObject] = ["y2kOpt": ""]
-        let user1 = userMapper.map(JSON)
+		let user1: User! = Mapper().map(JSON, toType: User.self)
 
         XCTAssert(user1 != nil, "ISO8601DateTransform must not crash for empty string")
         XCTAssert(user1.y2kOpt == nil, "ISO8601DateTransform should return nil for empty string")
 
         JSON["y2kOpt"] = "incorrect format"
-        let user2 = userMapper.map(JSON)
+		let user2: User! = userMapper.map(JSON, toType: User.self)
 
         XCTAssert(user2 != nil, "ISO8601DateTransform must not crash for incorrect format")
         XCTAssert(user2.y2kOpt == nil, "ISO8601DateTransform should return nil for incorrect format")
@@ -312,9 +313,8 @@ class ObjectMapperTests: XCTestCase {
     
     func testJsonToObjectModelOptionalDictionnaryOfPrimitives() {
         var json = ["dictStringString":["string": "string"], "dictStringBool":["string": false], "dictStringInt":["string": 1], "dictStringDouble":["string": 1.1], "dictStringFloat":["string": 1.2]]
-        
-        let mapper = Mapper<TestCollectionOfPrimitives>()
-        let testSet = mapper.map(json)
+		
+		let testSet = Mapper().map(json, toType: TestCollectionOfPrimitives.self)
         
         XCTAssertTrue(testSet.dictStringString.count == 1)
         XCTAssertTrue(testSet.dictStringInt.count == 1)
@@ -331,7 +331,7 @@ class ObjectMapperTests: XCTestCase {
         object.dictStringDouble = ["string": 1.2]
         object.dictStringFloat = ["string": 1.3]
         
-        let json = Mapper<TestCollectionOfPrimitives>().toJSON(object)
+		let json = Mapper().toJSON(object)
         
         XCTAssertTrue((json["dictStringString"] as [String:String]).count == 1)
         XCTAssertTrue((json["dictStringBool"] as [String:Bool]).count == 1)
@@ -342,15 +342,25 @@ class ObjectMapperTests: XCTestCase {
         let value = dict["string"]! as String
         XCTAssertTrue(value == "string")
     }
+	
+	func testSubClasses(){
+		
+		var subclass = Subclass<String>()
+		subclass.base = "base class var"
+		subclass.sub = "subclass var"
+		
+		let string = Mapper().toJSONString(subclass, prettyPrint: true)
+		println(string)
+	}
 }
 
-class Response<T:Mappable>: Mappable {
+class Response<T: Mappable>: Mappable {
 	var result: T?
 	
 	required init() {
 	}
 	
-	func map<N>(mapper: Mapper<N>) {
+	func map(mapper: Mapper) {
 		result <= mapper["result"]
 	}
 }
@@ -361,7 +371,7 @@ class Status: Mappable {
 	required init() {
 	}
 	
-	func map<N>(mapper: Mapper<N>) {
+	func map(mapper: Mapper) {
 		status <= mapper["code"]
 	}
 }
@@ -373,7 +383,7 @@ class Plan: Mappable {
 		
 	}
 	
-	func map<N>(mapper: Mapper<N>) {
+	func map(mapper: Mapper) {
 		tasks <= mapper["tasks"]
 	}
 }
@@ -386,7 +396,7 @@ class Task: Mappable {
 		
 	}
 	
-	func map<N>(mapper: Mapper<N>) {
+	func map(mapper: Mapper) {
 		taskId <= mapper["taskId"]
 		percentage <= mapper["percentage"]
 	}
@@ -403,7 +413,7 @@ struct Student: Mappable {
 		
 	}
 	
-	mutating func map<N>(mapper: Mapper<N>) {
+	mutating func map(mapper: Mapper) {
 		name <= mapper["name"]
 		UUID <= mapper["UUID"]
 		major <= mapper["major"]
@@ -441,7 +451,7 @@ class User: Mappable {
 		
     }
 	
-	func map<N>(mapper: Mapper<N>) {
+	func map(mapper: Mapper) {
 		username         <= mapper["username"]
 		identifier       <= mapper["identifier"]
 		photoCount       <= mapper["photoCount"]
@@ -486,7 +496,7 @@ class TestCollectionOfPrimitives : Mappable {
     
     required init() {}
     
-    func map<N>(mapper: Mapper<N>) {
+    func map(mapper: Mapper) {
         dictStringString    <= mapper["dictStringString"]
         dictStringBool      <= mapper["dictStringBool"]
         dictStringInt       <= mapper["dictStringInt"]
@@ -498,4 +508,32 @@ class TestCollectionOfPrimitives : Mappable {
         arrayDouble         <= mapper["arrayDouble"]
         arrayFloat          <= mapper["arrayFloat"]
     }
+}
+
+class Base: Mappable {
+
+	var base: String?
+	
+	required init(){
+		
+	}
+	
+	func map(mapper: Mapper) {
+		base <= mapper["base"]
+	}
+}
+
+class Subclass<T>: Base, Mappable {
+
+	var sub: String?
+	
+	required init(){
+		
+	}
+
+	override func map(mapper: Mapper) {
+		super.map(mapper)
+		
+		sub <= mapper["sub"]
+	}
 }

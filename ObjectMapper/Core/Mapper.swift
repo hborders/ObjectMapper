@@ -9,7 +9,7 @@
 import Foundation
 
 public protocol Mappable {
-	mutating func map<N>(mapper: Mapper<N>)
+	mutating func map(mapper: Mapper)
 	init()
 }
 
@@ -18,7 +18,7 @@ enum MappingType {
 	case toJSON
 }
 
-public class Mapper<N: Mappable> {
+public class Mapper {
 	var JSONDictionary: [String : AnyObject] = [:]
 	var currentValue: AnyObject?
 	var currentKey: String?
@@ -42,9 +42,9 @@ public class Mapper<N: Mappable> {
 	// MARK: Public Mapping functions
 	
 	/**
-	 * Map a JSON string onto an existing object
-	 */
-	public func map(string JSONString: String, var toObject object: N) -> N! {
+	* Map a JSON string onto an existing object
+	*/
+	public func map<N: Mappable>(string JSONString: String, var toObject object: N) -> N! {
 		if let JSON = parseJSONDictionary(JSONString) {
 			return map(JSON, toObject: object)
 		}
@@ -54,9 +54,9 @@ public class Mapper<N: Mappable> {
 	/**
 	* Map a JSON string to an object that conforms to Mappable
 	*/
-	public func map(string JSONString: String) -> N! {
+	public func map<N: Mappable>(string JSONString: String, toType type: N.Type) -> N! {
 		if let JSON = parseJSONDictionary(JSONString) {
-			return map(JSON)
+			return map(JSON, toType: type)
 		}
 		return nil
 	}
@@ -64,7 +64,7 @@ public class Mapper<N: Mappable> {
 	/**
 	* Maps a JSON dictionary to an object that conforms to Mappable
 	*/
-	public func map(JSON: [String : AnyObject]) -> N! {
+	public func map<N: Mappable>(JSON: [String : AnyObject], toType type: N.Type) -> N! {
 		let object = N()
 		return map(JSON, toObject: object)
 	}
@@ -73,7 +73,7 @@ public class Mapper<N: Mappable> {
 	* Maps a JSON dictionary to an existing object that conforms to Mappable.
 	* Usefull for those pesky objects that have crappy designated initializers like NSManagedObject
 	*/
-	public func map(JSON: [String : AnyObject], var toObject object: N) -> N! {
+	public func map<N: Mappable>(JSON: [String : AnyObject], var toObject object: N) -> N! {
 		mappingType = .fromJSON
 		self.JSONDictionary = JSON
 		object.map(self)
@@ -83,15 +83,15 @@ public class Mapper<N: Mappable> {
 	/**
 	* Maps a JSON array to an object that conforms to Mappable
 	*/
-	public func mapArray(string JSONString: String) -> [N] {
+	public func mapArray<N: Mappable>(string JSONString: String, toType type: N.Type) -> [N] {
 		if let JSONArray = parseJSONArray(JSONString) {
-			return mapArray(JSONArray)
+			return mapArray(JSONArray, toType: type)
 		}
 
 		// failed to parse JSON into array form
 		// try to parse it into a dictionary and then wrap it in an array
 		if let JSONDict = parseJSONDictionary(JSONString) {
-			return mapArray([JSONDict])
+			return mapArray([JSONDict], toType: type)
 		}
 
 		return []
@@ -100,9 +100,9 @@ public class Mapper<N: Mappable> {
 	/**
 	* Maps a JSON dictionary to an array of object that conforms to Mappable
 	*/
-	public func mapArray(JSON: [[String : AnyObject]]) -> [N] {
+	public func mapArray<N: Mappable>(JSON: [[String : AnyObject]], toType type: N.Type) -> [N] {
 		return JSON.map {
-			self.map($0)
+			self.map($0, toType: type)
 		}		
 	}
 
@@ -111,7 +111,7 @@ public class Mapper<N: Mappable> {
 	/**
 	* Maps an object that conforms to Mappable to a JSON dictionary <String : AnyObject>
 	*/
-	public func toJSON(var object: N) -> [String : AnyObject] {
+	public func toJSON<N: Mappable>(var object: N) -> [String : AnyObject] {
 		mappingType = .toJSON
 
 		self.JSONDictionary = [String : AnyObject]()
@@ -124,7 +124,7 @@ public class Mapper<N: Mappable> {
 	/** 
 	* Maps an array of Objects to an array of JSON dictionaries [[String : AnyObject]]
 	*/
-	public func toJSONArray(array: [N]) -> [[String : AnyObject]] {
+	public func toJSONArray<N: Mappable>(array: [N], toType: N.Type) -> [[String : AnyObject]] {
 		return array.map {
 			self.toJSON($0)
 		}
@@ -133,7 +133,7 @@ public class Mapper<N: Mappable> {
 	/** 
 	* Maps an Object to a JSON string
 	*/
-	public func toJSONString(object: N, prettyPrint: Bool) -> String! {
+	public func toJSONString<N: Mappable>(object: N, prettyPrint: Bool) -> String! {
 		let JSONDict = toJSON(object)
 
 		var err: NSError?

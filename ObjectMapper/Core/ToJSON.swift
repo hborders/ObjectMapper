@@ -84,7 +84,7 @@ class ToJSON {
     }
     
     func object<N: Mappable>(field: N, key: String, inout dictionary: [String : AnyObject]) {
-        let mapper = Mapper<N>()
+        let mapper = Mapper()
         
         dictionary[key] = NSDictionary(dictionary: mapper.toJSON(field))
     }
@@ -99,7 +99,7 @@ class ToJSON {
         var JSONObjects = NSMutableArray()
         
         for object in field {
-            let mapper = Mapper<N>()
+            let mapper = Mapper()
             JSONObjects.addObject(mapper.toJSON(object))
         }
 
@@ -118,7 +118,7 @@ class ToJSON {
         var JSONObjects = NSMutableDictionary()
         
         for (k, object) in field {
-            let mapper = Mapper<N>()
+            let mapper = Mapper()
             JSONObjects.setObject(mapper.toJSON(object), forKey: k)
 
         }
